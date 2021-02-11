@@ -39,6 +39,8 @@ def load_csv(filename, sync, ignore_untagged, remove_file):
     tzoffset = f"+{tzoffset:02d}:00"
     print(f"Your timezone offset is {tzoffset}")
 
+    skip_prefix = os.environ.get('TOGGL_SKIP_PREFIX')
+
     entries = []
 
     with open(filename, 'r') as csv_file:
@@ -53,6 +55,9 @@ def load_csv(filename, sync, ignore_untagged, remove_file):
         for line_number, row in enumerate(csv_reader, start=2):
             entry = TogglTimerEntry(*row)
             description = entry.Description
+            if description.startswith(skip_prefix):
+                print(f"Skipping entry {line_number}: '{description}'starts with SKIP_PREFIX '{skip_prefix}'")
+                continue
             jira_issue = re.match('([a-z]+-[0-9]+)[:. ]?(.*)', description, re.IGNORECASE)
             if not jira_issue:
                 prj_env_var = project_to_env_var(entry.Project)
